@@ -1,0 +1,43 @@
+import pandas as pd
+import string
+import nltk
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.model_selection import train_test_split
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.metrics import accuracy_score, classification_report
+
+# Load dataset
+df = pd.read_csv("spam.csv", encoding="latin-1")
+df = df.rename(columns={"v1": "label", "v2": "message"})
+df = df[["label", "message"]]
+
+df["label"] = df["label"].map({"ham": 0, "spam": 1})
+
+def preprocess_text(text):
+    text = text.lower()
+    text = text.translate(str.maketrans("", "", string.punctuation))
+    return text
+
+df["cleaned_message"] = df["message"].apply(preprocess_text)
+
+# Convert text to numerical representation
+vectorizer = TfidfVectorizer(max_features=5000)
+X = vectorizer.fit_transform(df["cleaned_message"])
+y = df["label"]
+
+# Split data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Train the model
+nb_model = MultinomialNB()
+nb_model.fit(X_train, y_train)
+
+# Predictions
+y_pred = nb_model.predict(X_test)
+
+# Evaluate the model
+accuracy = accuracy_score(y_test, y_pred)
+report = classification_report(y_test, y_pred)
+
+print(f"Model Accuracy: {accuracy:.2f}")
+print("Classification Report:\n", report)
