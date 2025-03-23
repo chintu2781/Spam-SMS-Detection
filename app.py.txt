@@ -1,0 +1,29 @@
+import streamlit as st
+import joblib
+import string
+
+# Load trained model and vectorizer
+model = joblib.load("spam_model.pkl")
+vectorizer = joblib.load("vectorizer.pkl")
+
+def preprocess_text(text):
+    """Preprocess input text by converting to lowercase and removing punctuation."""
+    text = text.lower()
+    text = text.translate(str.maketrans("", "", string.punctuation))
+    return text
+
+# Streamlit UI
+st.title("📩 Spam SMS Detection")
+st.write("Enter an SMS message below to check if it's spam or not.")
+
+user_input = st.text_area("✉️ Enter SMS message:")
+
+if st.button("🔍 Detect"):
+    if user_input.strip() == "":
+        st.warning("Please enter a message!")
+    else:
+        processed_text = preprocess_text(user_input)
+        vectorized_text = vectorizer.transform([processed_text])
+        prediction = model.predict(vectorized_text)[0]
+        result = "✅ Not Spam" if prediction == 0 else "🚨 Spam"
+        st.subheader(result)
